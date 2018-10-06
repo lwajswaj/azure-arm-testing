@@ -215,13 +215,13 @@ Function Test-AzureJson {
         $nestedTemplateFileName = $nestedTemplateFileName.SubString($nestedTemplateFileName.IndexOf("'") + 1).Replace("'","").Replace('?','')
 
         Context "Nested Template: $nestedTemplateFileName" {
-          It "should exist the nested template at $WorkingFolder\nested\$nestedTemplateFileName" {
-            "$WorkingFolder\nested\$nestedTemplateFileName" | Should -Exist
+          It "should exist the nested template at $WorkingFolder\linked\$nestedTemplateFileName" {
+            "$WorkingFolder\linked\$nestedTemplateFileName" | Should -Exist
           }
 
-          if(Test-Path "$WorkingFolder\nested\$nestedTemplateFileName")
+          if(Test-Path "$WorkingFolder\linked\$nestedTemplateFileName")
           {
-            $nestedParameters = (Get-Content "$WorkingFolder\nested\$nestedTemplateFileName" | ConvertFrom-Json).parameters
+            $nestedParameters = (Get-Content "$WorkingFolder\linked\$nestedTemplateFileName" | ConvertFrom-Json).parameters
             $requiredNestedParameters = $nestedParameters | Get-Member -MemberType NoteProperty | Where-Object -FilterScript {$null -eq $nestedParameters.$($_.Name).defaultValue} | ForEach-Object -Process {$_.Name}
 
             
@@ -275,14 +275,14 @@ ForEach($armTemplate In $armTemplates)
   {
     $nestedTemplate = $nestedTemplate.SubString($nestedTemplate.IndexOf("'") + 1).Replace("'","").Replace('?','')
     
-    Describe "Nested: $WorkingFolder\nested\$nestedTemplate" {
+    Describe "Nested: $WorkingFolder\linked\$nestedTemplate" {
       It "Should exist" {
-        "$WorkingFolder\nested\$nestedTemplate" | Should -Exist
+        "$WorkingFolder\linked\$nestedTemplate" | Should -Exist
       }
 
-      if(Test-Path $WorkingFolder\nested\$nestedTemplate)
+      if(Test-Path $WorkingFolder\linked\$nestedTemplate)
       {
-        Test-AzureJson -FilePath $WorkingFolder\nested\$nestedTemplate
+        Test-AzureJson -FilePath $WorkingFolder\linked\$nestedTemplate
       }
     }
   }
