@@ -123,10 +123,10 @@ Function Test-AzureJson {
     }
   }
 
-  $context = $null
-  try {$context = Get-AzureRmContext} catch {}
-  if($null -ne $context.Subscription.Id) {
-    Context "Azure API Validation" {
+  Context "Azure API Validation" {
+    $context = $null
+    try {$context = Get-AzureRmContext} catch {}
+    if($null -ne $context.Subscription.Id) {
       $Parameters = $objMainTemplate.parameters | Get-Member | Where-Object -Property MemberType -eq -VAlue "NoteProperty" | Select-Object -ExpandProperty Name
       $TemplateParameters = @{}
       $PesterRGCreated = $false
@@ -201,8 +201,13 @@ Function Test-AzureJson {
         }
       }
     }
+    else {
+      It "should be a valid template" {
+        Set-TestInconclusive -Message "Not logged to AzureRM for which Test-AzureRmResourceGroupDeployment cannot be executed."
+      }
+    }
   }
-
+  
   $nestedTemplates = $objMainTemplate.resources | Where-Object -Property Type -IEQ -Value "Microsoft.Resources/deployments"
   
   if($null -ne $nestedTemplates)
