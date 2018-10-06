@@ -123,6 +123,86 @@ Function Test-AzureJson {
     }
   }
 
+  $context = $null
+  try {$context = Get-AzureRmContext} catch {}
+  if($null -ne $context.Subscription.Id) {
+    Context "Azure API Validation" {
+      $Parameters = $objMainTemplate.parameters | Get-Member | Where-Object -Property MemberType -eq -VAlue "NoteProperty" | Select-Object -ExpandProperty Name
+      $TemplateParameters = @{}
+      $PesterRGCreated = $false
+
+      ForEach($Parameter In $Parameters) {
+        if(!($objMainTemplate.parameters.$Parameter.defaultValue)) {
+          if($objMainTemplate.parameters.$Parameter.allowedValues) {
+            $TemplateParameters.Add($Parameter, $objMainTemplate.parameters.$Parameter.allowedValues[0])
+          }
+          else {
+            switch ($objMainTemplate.parameters.$Parameter.type) {
+              "bool" {
+                $TemplateParameters.Add($Parameter, $true)
+              }
+
+              "int" {
+                if($objMainTemplate.parameters.$Parameter.minValue) {
+                  $TemplateParameters.Add($Parameter, $objMainTemplate.parameters.$Parameter.minValue)
+                }
+                else {
+                  $TemplateParameters.Add($Parameter, 1)
+                }
+              }
+
+              "string" {
+                if($objMainTemplate.parameters.$Parameter.minValue) {
+                  $TemplateParameters.Add($Parameter, "a" * $objMainTemplate.parameters.$Parameter.minLength)
+                }
+                else {
+                  $TemplateParameters.Add($Parameter, "dummystring")
+                }
+              }
+
+              "securestring" {
+                $TemplateParameters.Add($Parameter, "dummystring")
+              }
+
+              "array" {
+                $TemplateParameters.Add($Parameter, @(1,2,3))
+              }
+
+              "object" {
+                $TemplateParameters.Add($Parameter, (New-Object -TypeName psobject -Property @{"DummyProperty"="DummyValue"}))
+              }
+
+              "secureobject" {
+                $TemplateParameters.Add($Parameter, (New-Object -TypeName psobject -Property @{"DummyProperty"="DummyValue"}))
+              }
+            }
+          }
+        }
+      }
+
+      if(!(Get-AzureRmResourceGroup -Name "PesterRG" -ErrorAction SilentlyContinue)) {
+        New-AzureRmResourceGroup -Name "PesterRG" -Location "East US" | Out-Null
+        $PesterRGCreated = $true
+      }
+
+      $output = Test-AzureRmResourceGroupDeployment -ResourceGroupName "PesterRG" -TemplateFile $armTemplate.FullName @TemplateParameters
+
+      if($PesterRGCreated) {
+        Remove-AzureRmResourceGroup -Name "PesterRG" | Out-Null
+      }
+
+      It "should be a valid template" {
+        $output | Should -BeNullOrEmpty
+      }
+
+      ForEach($ValidationError In $output) {
+        It ("shouldn't have {0}" -f $ValidationError.Code) {
+          $ValidationError.Message | Should -BeNullOrEmpty
+        }
+      }
+    }
+  }
+
   $nestedTemplates = $objMainTemplate.resources | Where-Object -Property Type -IEQ -Value "Microsoft.Resources/deployments"
   
   if($null -ne $nestedTemplates)
