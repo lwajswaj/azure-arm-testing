@@ -216,7 +216,7 @@ Function Test-AzureJson {
     {
       If($null -ne $nestedTemplate.properties.templateLink.uri)
       {
-        $nestedTemplateFileName = [System.Text.RegularExpressions.RegEx]::Matches($nestedTemplate.properties.templateLink.uri, "\'\w*\.json\??\'").Value
+        $nestedTemplateFileName = [System.Text.RegularExpressions.RegEx]::Matches($nestedTemplate.properties.templateLink.uri, "\w*\.json(\?)?").Value
         $nestedTemplateFileName = $nestedTemplateFileName.SubString($nestedTemplateFileName.IndexOf("'") + 1).Replace("'","").Replace('?','')
 
         Context "Nested Template: $nestedTemplateFileName" {
