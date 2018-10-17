@@ -232,8 +232,12 @@ Function Test-AzureJson {
             
             ForEach($requiredNestedParameter In $requiredNestedParameters)
             {
-              It "should set a value for $requiredNestedParameter" {
+              It "should define the parameter: $requiredNestedParameter" {
                 $nestedTemplate.properties.parameters.$requiredNestedParameter | Should -Not -BeNullOrEmpty
+              }
+
+              It "should set a value for $requiredNestedParameter" {
+                $nestedTemplate.properties.parameters.$requiredNestedParameter.Value | Should -Not -BeNullOrEmpty
               }
             }
           }
